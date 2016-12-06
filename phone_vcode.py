@@ -63,7 +63,7 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
     # 手机号码|token注意：多个号码返回值：手机号;手机号;手机号| token
     print 'requests_response.content ', requests_response.content
     res = requests_response.content
-    res = '13524298699;13524298633|' + user_token
+    #res = '13524298699;13524298633|' + user_token
     if not re.match('^[1-9][0-9]{10,}', res):
         print "response error {0}".format(res)
         return
