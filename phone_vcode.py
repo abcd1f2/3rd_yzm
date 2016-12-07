@@ -82,6 +82,7 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
 
     while True:
         for mobile_item in mobiles:
+            time.sleep(get_interval)
             cursor = conn.execute("select phone_times from get_phone_sms where phone_times = {0}".format(int(mobile_item)))
             print cursor, type(cursor)
             for row in cursor:
@@ -93,7 +94,17 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                         format(user_name, user_token, mobile_item, business_id)
 
                     try:
-                        requests_response = requests.get(get_vcode_url)
+                        requests_response = requests.get(get_vcode_url, timeout=max_time)
+                    except requests.Timeout as e:
+                        # http://api.jyzszp.com/Api/index/addIgnoreList?uid=用户名&token=登录时返回的令牌&mobiles=号码1,号码2,号码3&pid=项目ID
+                        try:
+                            back_url = 'http://api.jyzszp.com/Api/index/addIgnoreList?uid={0}&token={1}&mobiles={2}&pid={3}'.format(user_name, user_token, mobile_item, business_id)
+                            r = requests.get(back_url)
+                            if r.status_code == 200:
+                                print "set mobile {0} back".format(mobile_item)
+                        except Exception:
+                            pass
+                        break
                     except Exception as e:
                         print "request error {0}".format(e)
                         break
@@ -118,4 +129,5 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
 if __name__ == "__main__":
     user = 'yumi11'
     pass_wd = 'shijian123'
-    my_post(user, pass_wd, 1, 2, 3, 4)
+    business_id = 1027
+    my_post(user, pass_wd, business_id, 2, 3, 4)
