@@ -119,15 +119,15 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
 
                     try:
                         conn.execute("delete from get_phone_sms where phone_times = {0}".format(int(mobile_item)))
-                        conn.execute("insert into phone_sms(phone, sms) values({0}, {1})".format(int(mobile_item), s[2]))
+                        conn.execute("insert into phone_sms(phone, sms) values({0}, '{1}')".format(int(mobile_item), s[2]))
                         conn.commit()
                     except Exception as e:
-                        print "sql error {0}".format(e)
+                        print "sql error {0} s2 {1}".format(e, s[2])
                         break
 
 
 if __name__ == "__main__":
     user = 'yumi11'
     pass_wd = 'shijian123'
-    business_id = 1027
+    business_id = 1199
     my_post(user, pass_wd, business_id, 2, 3, 4)
