@@ -100,71 +100,80 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                     print "execute all_phone error {0}".format(e)
             conn.commit()
 
-        for mobile_item in all_phone_map:
-            if all_phone_map[mobile_item].is_get_result == 0 and all_phone_map[mobile_item].deadline_time <= int(time.time()):
-                try:
-                    conn.execute("delete from all_phone where phone = {0}".format(int(mobile_item)))
-                    conn.execute("delete from get_phone_sms where phone_times = {0}".format(int(mobile_item)))
-                except Exception as e:
-                    print "execute all_phone error {0}".format(e)
-                    break
+        if len(all_phone_map) > 0:
+            for mobile_item in all_phone_map:
+                if all_phone_map[mobile_item].deadline_time <= int(time.time()) and all_phone_map[mobile_item].is_get_result == 0:
+                    try:
+                        conn.execute("delete from all_phone where phone = {0}".format(int(mobile_item)))
+                        conn.execute("delete from get_phone_sms where phone_times = {0}".format(int(mobile_item)))
+                    except Exception as e:
+                        print "execute all_phone error {0}".format(e)
+                        break
+                    else:
+                        conn.commit()
+                    finally:
+                        all_phone_map.pop(mobile_item)
+                elif all_phone_map[mobile_item].is_get_result == 1:
+                    if all_phone_map[mobile_item].deadline_time > int(time.time()):
+                        cursor = conn.execute("select phone_times from get_phone_sms where phone_times = {0}".format(int(mobile_item)))
+                        for row in cursor:
+                            if row[0]:
+                                time.sleep(1)
+                                # http://api.jyzszp.com/Api/index/getVcodeAndReleaseMobile?uid=用户&token=登录时返回的令牌&mobile=获取到的手机号码&pid=项目ID
+                                # 成功返回：手机号码|验证码|短信内容
+                                get_vcode_url = 'http://api.jyzszp.com/Api/index/getVcodeAndReleaseMobile?uid={0}&token={1}&mobile={2}&pid={3}'. \
+                                    format(user_name, user_token, mobile_item, business_id)
+
+                                try:
+                                    requests_response = requests.get(get_vcode_url, timeout=max_time)
+                                except requests.Timeout as e:
+                                    # http://api.jyzszp.com/Api/index/addIgnoreList?uid=用户名&token=登录时返回的令牌&mobiles=号码1,号码2,号码3&pid=项目ID
+                                    try:
+                                        back_url = 'http://api.jyzszp.com/Api/index/addIgnoreList?uid={0}&token={1}&mobiles={2}&pid={3}'.format(
+                                            user_name, user_token, mobile_item, business_id)
+                                        r = requests.get(back_url)
+                                        if r.status_code == 200:
+                                            print "set mobile {0} back".format(mobile_item)
+                                    except Exception:
+                                        break
+                                    finally:
+                                        all_phone_map[mobile_item].is_get_result = 0
+                                        all_phone_map[mobile_item].deadline_time = int(time.time()) + delay_delete_time_when_timeout
+                                except Exception as e:
+                                    print "request error {0}".format(e)
+                                    all_phone_map[mobile_item].is_get_result = 0
+                                    all_phone_map[mobile_item].deadline_time = int(time.time()) + delay_delete_time_when_timeout
+                                    break
+                                else:
+                                    all_phone_map[mobile_item].is_get_result = 0
+                                    all_phone_map[mobile_item].deadline_time = int(time.time()) + delay_delete_time_when_success
+
+                                res = requests_response.content
+                                if not re.match('^[1-9][0-9]{10,}', res):
+                                    print "response error {0}".format(res)
+                                    break
+                                s = res.split('|')
+                                if len(s) != 3:
+                                    print "response error {0}".format(res)
+                                    break
+
+                                try:
+                                    conn.execute("insert into phone_sms(phone, sms) values({0}, '{1}')".format(int(mobile_item), s[2]))
+                                except Exception as e:
+                                    print "sql error {0} s2 {1}".format(e, s[2])
+                                    break
+                                else:
+                                    conn.commit()
+                    else:
+                        all_phone_map[mobile_item].is_get_result = 0
+                        all_phone_map[mobile_item].deadline_time = int(time.time()) + delay_delete_time_when_timeout
                 else:
-                    conn.commit()
-                finally:
-                    all_phone_map.pop(mobile_item)
-            elif all_phone_map[mobile_item].is_get_result == 1 and all_phone_map[mobile_item].deadline_time <= int(time.time()):
-                cursor = conn.execute("select phone_times from get_phone_sms where phone_times = {0}".format(int(mobile_item)))
-                print cursor, type(cursor)
-                for row in cursor:
-                    if row[0]:
-                        time.sleep(1)
-                        # http://api.jyzszp.com/Api/index/getVcodeAndReleaseMobile?uid=用户&token=登录时返回的令牌&mobile=获取到的手机号码&pid=项目ID
-                        # 成功返回：手机号码|验证码|短信内容
-                        get_vcode_url = 'http://api.jyzszp.com/Api/index/getVcodeAndReleaseMobile?uid={0}&token={1}&mobile={2}&pid={3}'. \
-                            format(user_name, user_token, mobile_item, business_id)
-
-                        try:
-                            requests_response = requests.get(get_vcode_url, timeout=max_time)
-                        except requests.Timeout as e:
-                            # http://api.jyzszp.com/Api/index/addIgnoreList?uid=用户名&token=登录时返回的令牌&mobiles=号码1,号码2,号码3&pid=项目ID
-                            try:
-                                back_url = 'http://api.jyzszp.com/Api/index/addIgnoreList?uid={0}&token={1}&mobiles={2}&pid={3}'.format(
-                                    user_name, user_token, mobile_item, business_id)
-                                r = requests.get(back_url)
-                                if r.status_code == 200:
-                                    print "set mobile {0} back".format(mobile_item)
-                            except Exception:
-                                pass
-                            finally:
-                                all_phone_map[mobile_item].is_get_result = 0
-                                all_phone_map[mobile_item].deadline_time = int(time.time()) + delay_delete_time_when_timeout
-                            break
-                        except Exception as e:
-                            print "request error {0}".format(e)
-                            break
-                        res = requests_response.content
-                        if not re.match('^[1-9][0-9]{10,}', res):
-                            print "response error {0}".format(res)
-                            break
-                        s = res.split('|')
-                        if len(s) != 3:
-                            print "response error {0}".format(res)
-                            break
-
-                        try:
-                            conn.execute("insert into phone_sms(phone, sms) values({0}, '{1}')".format(int(mobile_item), s[2]))
-                        except Exception as e:
-                            print "sql error {0} s2 {1}".format(e, s[2])
-                            break
-                        else:
-                            conn.commit()
-                        finally:
-                            all_phone_map[mobile_item].is_get_result = 0
-                            all_phone_map[mobile_item].deadline_time = int(time.time()) + delay_delete_time_when_success
+                    time.sleep(1)
+        else:
+            time.sleep(1)
 
 
 if __name__ == "__main__":
-
     user = 'yumi11'
     pass_wd = 'shijian123'
     business_id = 1199
