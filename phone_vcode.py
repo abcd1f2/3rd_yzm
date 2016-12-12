@@ -79,18 +79,18 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                 requests_response = requests.get(get_mobile_num_url)
             except Exception as e:
                 print "requests error {0}".format(e)
-                break
+                continue
 
             print 'requests_response.content ', requests_response.content
             res = requests_response.content
             if not re.match('^[1-9][0-9]{10,}', res):
-                print "response error {0}".format(res)
-                break
+                print "response error {0} {1}".format(res, requests_response.status_code)
+                continue
 
             s = res.split('|')
             if len(s) != 2:
                 print "response error {0}".format(res)
-                break
+                continue
 
             for mobile_item in s[0].split(';'):
                 try:
@@ -108,7 +108,7 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                         conn.execute("delete from get_phone_sms where phone_times = {0}".format(int(mobile_item)))
                     except Exception as e:
                         print "execute all_phone error {0}".format(e)
-                        break
+                        continue
                     else:
                         conn.commit()
                     finally:
@@ -135,7 +135,7 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                                         if r.status_code == 200:
                                             print "set mobile {0} back".format(mobile_item)
                                     except Exception:
-                                        break
+                                        continue
                                     finally:
                                         all_phone_map[mobile_item].is_get_result = 0
                                         all_phone_map[mobile_item].deadline_time = int(time.time()) + delay_delete_time_when_timeout
@@ -143,7 +143,7 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                                     print "request error {0}".format(e)
                                     all_phone_map[mobile_item].is_get_result = 0
                                     all_phone_map[mobile_item].deadline_time = int(time.time()) + delay_delete_time_when_timeout
-                                    break
+                                    continue
                                 else:
                                     all_phone_map[mobile_item].is_get_result = 0
                                     all_phone_map[mobile_item].deadline_time = int(time.time()) + delay_delete_time_when_success
@@ -151,17 +151,17 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                                 res = requests_response.content
                                 if not re.match('^[1-9][0-9]{10,}', res):
                                     print "response error {0}".format(res)
-                                    break
+                                    continue
                                 s = res.split('|')
                                 if len(s) != 3:
                                     print "response error {0}".format(res)
-                                    break
+                                    continue
 
                                 try:
                                     conn.execute("insert into phone_sms(phone, sms) values({0}, '{1}')".format(int(mobile_item), s[2]))
                                 except Exception as e:
                                     print "sql error {0} s2 {1}".format(e, s[2])
-                                    break
+                                    continue
                                 else:
                                     conn.commit()
                     else:
