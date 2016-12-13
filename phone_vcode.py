@@ -72,7 +72,7 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
 
     while True:
         if get_numbers_time <= int(time.time()):
-            get_numbers_time += get_interval
+            get_numbers_time = get_interval + int(time.time())
             # http://api.jyzszp.com/Api/index/getMobilenum?pid=项目 ID&uid=用户名&token=登录时返回的令牌 &mobile=指定手机号码&size=1
             # 手机号码|token注意：多个号码返回值：手机号;手机号;手机号| token
             get_mobile_num_url = 'http://api.jyzszp.com/Api/index/getMobilenum?pid={0}&uid={1}&token={2}&size={3}'.\
@@ -120,6 +120,7 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                         cursor = conn.execute("select phone_times from get_phone_sms where phone_times = {0}".format(int(mobile_item)))
                         for row in cursor:
                             if row[0]:
+                                print u"select {0} from get_phone_sms".format(mobile_item)
                                 time.sleep(1)
                                 # http://api.jyzszp.com/Api/index/getVcodeAndReleaseMobile?uid=用户&token=登录时返回的令牌&mobile=获取到的手机号码&pid=项目ID
                                 # 成功返回：手机号码|验证码|短信内容
