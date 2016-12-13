@@ -16,8 +16,6 @@ try:
 except ImportError:
     sys.exit("Error: you need to install requests")
 
-# 最大获取结果时间，60秒过后不用获取了
-max_get_results_time = 60
 # 获取结果后1分钟后删除
 delay_delete_time_when_success = 60
 # 超时10分钟后删除
@@ -40,6 +38,9 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
     @get_interval 取结果间隔时间 取号间隔
     @max_time 取结果最大时间 超过这个时间丢弃
     """
+
+    # 最大获取结果时间，60秒过后不用获取了
+    max_get_results_time = max_time
 
     try:
         conn = sqlite3.connect('phone_sms.db')
@@ -143,19 +144,19 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                                     all_phone_map[mobile_item].is_get_result = 0
                                     all_phone_map[mobile_item].deadline_time = int(time.time()) + delay_delete_time_when_timeout
                                     continue
-                                else:
-                                    all_phone_map[mobile_item].is_get_result = 0
-                                    all_phone_map[mobile_item].deadline_time = int(time.time()) + delay_delete_time_when_success
 
                                 res = requests_response.content
-                                print u"getVcodeAndReleaseMobile {0}".format(res)
+                                print u"getVcodeAndReleaseMobile {0} {1}".format(mobile_item, res)
                                 if not re.match('^[1-9][0-9]{10,}', res):
-                                    print u"response error {0}".format(res)
+                                    print u"response error {0} {1}".format(mobile_item, res)
                                     continue
                                 s = res.split('|')
                                 if len(s) != 3:
-                                    print u"response error {0}".format(res)
+                                    print u"response error {0}".format(mobile_item, res)
                                     continue
+
+                                all_phone_map[mobile_item].is_get_result = 0
+                                all_phone_map[mobile_item].deadline_time = int(time.time()) + delay_delete_time_when_success
 
                                 try:
                                     conn.execute("insert into phone_sms(phone, sms) values({0}, '{1}')".format(int(mobile_item), s[2]))
