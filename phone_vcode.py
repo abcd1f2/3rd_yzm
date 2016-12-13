@@ -123,7 +123,6 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                                 # 成功返回：手机号码|验证码|短信内容
                                 get_vcode_url = 'http://api.jyzszp.com/Api/index/getVcodeAndReleaseMobile?uid={0}&token={1}&mobile={2}&pid={3}'. \
                                     format(user_name, user_token, mobile_item, business_id)
-
                                 try:
                                     requests_response = requests.get(get_vcode_url, timeout=max_time)
                                 except requests.Timeout as e:
@@ -149,6 +148,7 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                                     all_phone_map[mobile_item].deadline_time = int(time.time()) + delay_delete_time_when_success
 
                                 res = requests_response.content
+                                print u"getVcodeAndReleaseMobile {0}".format(res)
                                 if not re.match('^[1-9][0-9]{10,}', res):
                                     print u"response error {0}".format(res)
                                     continue
