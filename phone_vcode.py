@@ -101,7 +101,7 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
             conn.commit()
 
         if len(all_phone_map) > 0:
-            for mobile_item in all_phone_map:
+            for mobile_item in all_phone_map.keys():
                 if all_phone_map[mobile_item].deadline_time <= int(time.time()) and all_phone_map[mobile_item].is_get_result == 0:
                     try:
                         conn.execute("delete from all_phone where phone = {0}".format(int(mobile_item)))
