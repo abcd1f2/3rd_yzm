@@ -44,7 +44,7 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
     try:
         conn = sqlite3.connect('phone_sms.db')
     except Exception as e:
-        print "sqlite3 error {0}".format(e)
+        print u"sqlite3 error {0}".format(e)
         return
 
     # http://api.jyzszp.com/Api/index/loginIn?uid=用户名&pwd=密码
@@ -53,15 +53,15 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
     try:
         login_res = requests.get(login_url)
     except Exception as e:
-        print "request error {0}".format(e)
+        print u"request error {0}".format(e)
         return
     if login_res.status_code != 200:
-        print "requests error {0}".format(login_res.status_code)
+        print u"requests error {0}".format(login_res.status_code)
         return
     print "login ", login_res.content
     s = login_res.content.split('|')
     if len(s) != 3:
-        print "response error {0}".format(login_res.content)
+        print u"response error {0}".format(login_res.content)
         return
     user_token = s[2]
 
@@ -78,18 +78,18 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
             try:
                 requests_response = requests.get(get_mobile_num_url)
             except Exception as e:
-                print "requests error {0}".format(e)
+                print u"requests error {0}".format(e)
                 continue
 
-            print 'requests_response.content ', requests_response.content
+            print u'requests_response.content {0}'.format(requests_response.content)
             res = requests_response.content
             if not re.match('^[1-9][0-9]{10,}', res):
-                print "response error {0} {1}".format(res, requests_response.status_code)
+                print u"response error {0} {1}".format(res, requests_response.status_code)
                 continue
 
             s = res.split('|')
             if len(s) != 2:
-                print "response error {0}".format(res)
+                print u"response error {0}".format(res)
                 continue
 
             for mobile_item in s[0].split(';'):
@@ -97,7 +97,7 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                     conn.execute("insert into all_phone(phone) values({0})".format(int(mobile_item)))
                     all_phone_map[mobile_item] = phone_item(int(time.time()) + max_get_results_time)
                 except Exception as e:
-                    print "execute all_phone error {0}".format(e)
+                    print u"execute all_phone error {0}".format(e)
             conn.commit()
 
         if len(all_phone_map) > 0:
@@ -107,7 +107,7 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                         conn.execute("delete from all_phone where phone = {0}".format(int(mobile_item)))
                         conn.execute("delete from get_phone_sms where phone_times = {0}".format(int(mobile_item)))
                     except Exception as e:
-                        print "execute all_phone error {0}".format(e)
+                        print u"execute all_phone error {0}".format(e)
                         continue
                     else:
                         conn.commit()
@@ -133,14 +133,14 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                                             user_name, user_token, mobile_item, business_id)
                                         r = requests.get(back_url)
                                         if r.status_code == 200:
-                                            print "set mobile {0} back".format(mobile_item)
+                                            print u"set mobile {0} back".format(mobile_item)
                                     except Exception:
                                         continue
                                     finally:
                                         all_phone_map[mobile_item].is_get_result = 0
                                         all_phone_map[mobile_item].deadline_time = int(time.time()) + delay_delete_time_when_timeout
                                 except Exception as e:
-                                    print "request error {0}".format(e)
+                                    print u"request error {0}".format(e)
                                     all_phone_map[mobile_item].is_get_result = 0
                                     all_phone_map[mobile_item].deadline_time = int(time.time()) + delay_delete_time_when_timeout
                                     continue
@@ -150,17 +150,17 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
 
                                 res = requests_response.content
                                 if not re.match('^[1-9][0-9]{10,}', res):
-                                    print "response error {0}".format(res)
+                                    print u"response error {0}".format(res)
                                     continue
                                 s = res.split('|')
                                 if len(s) != 3:
-                                    print "response error {0}".format(res)
+                                    print u"response error {0}".format(res)
                                     continue
 
                                 try:
                                     conn.execute("insert into phone_sms(phone, sms) values({0}, '{1}')".format(int(mobile_item), s[2]))
                                 except Exception as e:
-                                    print "sql error {0} s2 {1}".format(e, s[2])
+                                    print u"sql error {0} s2 {1}".format(e, s[2])
                                     continue
                                 else:
                                     conn.commit()
