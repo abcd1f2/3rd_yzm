@@ -2,6 +2,7 @@
 
 import time
 import re
+import datetime
 
 import sys
 reload(sys)
@@ -82,7 +83,7 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                 print u"requests error {0}".format(e)
                 continue
 
-            print u'requests_response.content {0}'.format(requests_response.content)
+            print u'requests_response.content {0} {1}'.format(requests_response.content, datetime.datetime.now())
             res = requests_response.content
             if not re.match('^[1-9][0-9]{10,}', res):
                 print u"response error {0} {1}".format(res, requests_response.status_code)
@@ -146,7 +147,7 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                                     continue
 
                                 res = requests_response.content
-                                print u"getVcodeAndReleaseMobile {0} {1}".format(mobile_item, res)
+                                print u"getVcodeAndReleaseMobile {0} {1} {2}".format(mobile_item, res, datetime.datetime.now())
                                 if not re.match('^[1-9][0-9]{10,}', res):
                                     print u"response error {0} {1}".format(mobile_item, res)
                                     continue
@@ -178,7 +179,7 @@ if __name__ == "__main__":
     user = 'yumi11'
     pass_wd = 'shijian123'
     business_id = 1199
-    my_post(user, pass_wd, business_id, 2, 3, 4)
+    my_post(user, pass_wd, business_id, 2, 3, 60)
 
 
 
