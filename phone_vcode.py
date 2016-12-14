@@ -81,26 +81,19 @@ def my_post(user_name, pass_wd, business_id, get_numbers, get_interval, max_time
                 requests_response = requests.get(get_mobile_num_url)
             except Exception as e:
                 print u"requests error {0}".format(e)
-                continue
-
-            print u'requests_response.content {0} {1}'.format(requests_response.content, datetime.datetime.now())
-            res = requests_response.content
-            if not re.match('^[1-9][0-9]{10,}', res):
-                print u"response error {0} {1}".format(res, requests_response.status_code)
-                continue
-
-            s = res.split('|')
-            if len(s) != 2:
-                print u"response error {0}".format(res)
-                continue
-
-            for mobile_item in s[0].split(';'):
-                try:
-                    conn.execute("insert into all_phone(phone) values({0})".format(int(mobile_item)))
-                    all_phone_map[mobile_item] = phone_item(int(time.time()) + max_get_results_time)
-                except Exception as e:
-                    print u"execute all_phone error {0}".format(e)
-            conn.commit()
+            else:
+                print u'requests_response.content {0} {1}'.format(requests_response.content, datetime.datetime.now())
+                res = requests_response.content
+                if re.match('^[1-9][0-9]{10,}', res):
+                    s = res.split('|')
+                    if len(s) == 2:
+                        for mobile_item in s[0].split(';'):
+                            try:
+                                conn.execute("insert into all_phone(phone) values({0})".format(int(mobile_item)))
+                                all_phone_map[mobile_item] = phone_item(int(time.time()) + max_get_results_time)
+                            except Exception as e:
+                                print u"execute all_phone error {0}".format(e)
+                        conn.commit()
 
         if len(all_phone_map) > 0:
             for mobile_item in all_phone_map.keys():
